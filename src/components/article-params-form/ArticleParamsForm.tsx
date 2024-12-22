@@ -16,39 +16,27 @@ import { Select } from 'src/ui/select/Select';
 import styles from './ArticleParamsForm.module.scss';
 import { RadioGroup } from 'src/ui/radio-group';
 import { Separator } from 'src/ui/separator';
-import { useDisclosure } from 'src/components/article-params-form/hooks/useDisclosure'; // Подключите хук
+import { useDisclosure } from 'src/components/article-params-form/hooks/useDisclosure';
 
 type ArticleParamsFormProps = {
 	applySettings: (settings: ArticleStateType) => void;
 };
 
 export const ArticleParamsForm = ({ applySettings }: ArticleParamsFormProps) => {
-	const { isOpen, toggle, close } = useDisclosure(false, {
-		onOpen: () => console.log('Сайдбар открыт'),
-		onClose: () => console.log('Сайдбар закрыт'),
-	});
-
-	const [articleState, setArticleState] =
-		React.useState<ArticleStateType>(defaultArticleState);
-
+	const { isOpen, toggle, close } = useDisclosure(false);
+	const [articleState, setArticleState] = React.useState<ArticleStateType>(defaultArticleState);
 	const sidebarRef = useRef<HTMLDivElement>(null);
 
 	const handleChange = (option: OptionType, name: keyof ArticleStateType) => {
-		console.log('Изменение:', name, option);
-		setArticleState((prevState) => ({
-			...prevState,
-			[name]: option,
-		}));
+		setArticleState((prevState) => ({ ...prevState, [name]: option }));
 	};
 
 	const handleReset = () => {
 		setArticleState(defaultArticleState);
 		applySettings(defaultArticleState);
-		console.log('Сбросить настройки');
 	};
 
 	const handleApply = () => {
-		console.log('Применить настройки:', articleState);
 		applySettings(articleState);
 	};
 
@@ -73,19 +61,10 @@ export const ArticleParamsForm = ({ applySettings }: ArticleParamsFormProps) => 
 	return (
 		<>
 			<ArrowButton isOpen={isOpen} onClick={toggle} />
-			<aside
-				ref={sidebarRef}
-				className={`${styles.container} ${isOpen ? styles.container_open : ''}`}
-			>
+			<aside ref={sidebarRef} className={`${styles.container} ${isOpen ? styles.container_open : ''}`}>
 				<form className={styles.form} onSubmit={(e) => e.preventDefault()}>
-					<div
-						style={{
-							display: 'flex',
-							flexDirection: 'column',
-							gap: '50px',
-						}}
-					>
-						<Text as='h2' size={31} weight={800} uppercase={true}>
+					<div style={{ display: 'flex', flexDirection: 'column', gap: '50px' }}>
+						<Text as='h2' size={31} weight={800} uppercase>
 							Задайте параметры
 						</Text>
 						<Select
@@ -93,7 +72,6 @@ export const ArticleParamsForm = ({ applySettings }: ArticleParamsFormProps) => 
 							options={fontFamilyOptions}
 							title='Шрифт'
 							onChange={(option) => handleChange(option, 'fontFamilyOption')}
-							placeholder='Выберите шрифт'
 						/>
 						<RadioGroup
 							name='fontSize'
@@ -106,32 +84,25 @@ export const ArticleParamsForm = ({ applySettings }: ArticleParamsFormProps) => 
 							selected={articleState.fontColor}
 							options={fontColors}
 							title='Цвет шрифта'
+							onChange={(option) => handleChange(option, 'fontColor')}
 						/>
 						<Separator />
 						<Select
 							selected={articleState.backgroundColor}
 							options={backgroundColors}
 							title='Цвет фона'
+							onChange={(option) => handleChange(option, 'backgroundColor')}
 						/>
 						<Select
 							selected={articleState.contentWidth}
 							options={contentWidthArr}
 							title='Ширина контента'
+							onChange={(option) => handleChange(option, 'contentWidth')}
 						/>
 					</div>
 					<div className={styles.bottomContainer}>
-						<Button
-							title='Сбросить'
-							htmlType='reset'
-							type='clear'
-							onClick={handleReset}
-						/>
-						<Button
-							title='Применить'
-							htmlType='submit'
-							type='apply'
-							onClick={handleApply}
-						/>
+						<Button title='Сбросить' htmlType='reset' type='clear' onClick={handleReset} />
+						<Button title='Применить' htmlType='submit' type='apply' onClick={handleApply} />
 					</div>
 				</form>
 			</aside>
