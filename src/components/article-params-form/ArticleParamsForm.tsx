@@ -1,56 +1,83 @@
-import React, {useState} from 'react';
-import {ArrowButton} from 'src/ui/arrow-button';
-import {Button} from 'src/ui/button';
-import {Text} from 'src/ui/text';
+import React, { useEffect, useRef } from 'react';
+import { ArrowButton } from 'src/ui/arrow-button';
+import { Button } from 'src/ui/button';
+import { Text } from 'src/ui/text';
 import {
 	fontFamilyOptions,
 	fontSizeOptions,
 	fontColors,
 	defaultArticleState,
-	ArticleStateType, OptionType, contentWidthArr, backgroundColors,
+	ArticleStateType,
+	OptionType,
+	contentWidthArr,
+	backgroundColors,
 } from 'src/constants/articleProps';
-import {Select} from 'src/ui/select/Select'; // Импортируем компонент Select
+import { Select } from 'src/ui/select/Select';
 import styles from './ArticleParamsForm.module.scss';
-import {RadioGroup} from 'src/ui/radio-group';
-import {Separator} from 'src/ui/separator';
+import { RadioGroup } from 'src/ui/radio-group';
+import { Separator } from 'src/ui/separator';
+import { useDisclosure } from 'src/components/article-params-form/hooks/useDisclosure'; // Подключите хук
 
-export const ArticleParamsForm = () => {
-	// Состояние для открытия/закрытия сайдбара
-	const [isOpen, setIsOpen] = useState(false);
+type ArticleParamsFormProps = {
+	applySettings: (settings: ArticleStateType) => void;
+};
 
-	// Состояние для настроек статьи
-	const [articleState, setArticleState] = useState<ArticleStateType>(defaultArticleState);
+export const ArticleParamsForm = ({ applySettings }: ArticleParamsFormProps) => {
+	const { isOpen, toggle, close } = useDisclosure(false, {
+		onOpen: () => console.log('Сайдбар открыт'),
+		onClose: () => console.log('Сайдбар закрыт'),
+	});
 
-	// Обработчик клика на кнопку "Стрелка"
-	const handleToggleSidebar = () => {
-		setIsOpen(!isOpen);
-	};
+	const [articleState, setArticleState] =
+		React.useState<ArticleStateType>(defaultArticleState);
 
-	// Обработчик изменения настроек
+	const sidebarRef = useRef<HTMLDivElement>(null);
+
 	const handleChange = (option: OptionType, name: keyof ArticleStateType) => {
+		console.log('Изменение:', name, option);
 		setArticleState((prevState) => ({
 			...prevState,
 			[name]: option,
 		}));
 	};
 
-	// Обработчик клика на кнопку "Сбросить"
 	const handleReset = () => {
 		setArticleState(defaultArticleState);
+		applySettings(defaultArticleState);
 		console.log('Сбросить настройки');
 	};
 
-	// Обработчик клика на кнопку "Применить"
 	const handleApply = () => {
 		console.log('Применить настройки:', articleState);
-		// Здесь будет логика применения настроек через CSS-переменные
+		applySettings(articleState);
 	};
+
+	useEffect(() => {
+		const handleClickOutside = (event: MouseEvent) => {
+			if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+				close();
+			}
+		};
+
+		if (isOpen) {
+			document.addEventListener('mousedown', handleClickOutside);
+		} else {
+			document.removeEventListener('mousedown', handleClickOutside);
+		}
+
+		return () => {
+			document.removeEventListener('mousedown', handleClickOutside);
+		};
+	}, [isOpen, close]);
 
 	return (
 		<>
-			<ArrowButton isOpen={isOpen} onClick={handleToggleSidebar}/>
-			<aside className={`${styles.container} ${isOpen ? styles.container_open : ''}`}>
-				<form className={styles.form}>
+			<ArrowButton isOpen={isOpen} onClick={toggle} />
+			<aside
+				ref={sidebarRef}
+				className={`${styles.container} ${isOpen ? styles.container_open : ''}`}
+			>
+				<form className={styles.form} onSubmit={(e) => e.preventDefault()}>
 					<div
 						style={{
 							display: 'flex',
@@ -59,8 +86,8 @@ export const ArticleParamsForm = () => {
 						}}
 					>
 						<Text as='h2' size={31} weight={800} uppercase={true}>
-						Задайте параметры
-					</Text>
+							Задайте параметры
+						</Text>
 						<Select
 							selected={articleState.fontFamilyOption}
 							options={fontFamilyOptions}
@@ -69,17 +96,18 @@ export const ArticleParamsForm = () => {
 							placeholder='Выберите шрифт'
 						/>
 						<RadioGroup
-							name='Размер шрифта'
+							name='fontSize'
 							title='Размер шрифта'
 							options={fontSizeOptions}
 							selected={articleState.fontSizeOption}
+							onChange={(option) => handleChange(option, 'fontSizeOption')}
 						/>
 						<Select
 							selected={articleState.fontColor}
 							options={fontColors}
 							title='Цвет шрифта'
 						/>
-						<Separator/>
+						<Separator />
 						<Select
 							selected={articleState.backgroundColor}
 							options={backgroundColors}
@@ -90,7 +118,6 @@ export const ArticleParamsForm = () => {
 							options={contentWidthArr}
 							title='Ширина контента'
 						/>
-
 					</div>
 					<div className={styles.bottomContainer}>
 						<Button
